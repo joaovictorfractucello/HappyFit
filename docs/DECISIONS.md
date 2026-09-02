@@ -38,9 +38,21 @@ Trade-off aceito: o usuário precisa logar novamente após 7 dias de inatividade
 
 Nomenclatura de rotas, entidades e variáveis em inglês (padrão de mercado), independentemente do domínio do produto (treino de academia, contexto brasileiro).
 
+## Rate limiting e enumeração de usuários — MVP
+
+O `POST /auth/register` responde `409` quando o email já tem conta, o que permite enumeração de usuários por quem fizer requisições em lote. Fechar isso por completo exigiria respostas indistinguíveis (status, corpo, timing) e um email de aviso pro dono da conta — infraestrutura que o MVP não tem (fora de escopo). Fica para v1.1+.
+
+Decisão para o MVP:
+- **Register**: mantém o `409` explícito — prioriza o feedback a quem esqueceu que já tem conta.
+- **Login**: resposta única `401 "Credenciais inválidas"` para email inexistente e senha errada, com timing equalizado (bcrypt roda mesmo quando o email não existe). Não revela o que estava errado.
+- **Rate limiting**: 10 registros/hora por IP; 10 tentativas de login/15min por email (não por IP, para não punir usuários atrás do mesmo CGNAT de operadora móvel). Contador em memória, sem persistência entre restarts. Cobre força bruta, credential stuffing, enumeração em lote e DoS via bcrypt.
+- Versão robusta (store persistente, lockout por conta, coordenação entre instâncias) fica para v1.1.
+
+Modelo de ameaça considerado brando: "tem conta num app de treino de academia" não é informação sensível como seria em serviço médico, financeiro ou plataforma de denúncia.
+
 ## Fora do escopo atual — roadmap
 
-**v1.1**: dashboard com gráficos, recordes pessoais, volume, frequência, sistema de consistência/streak (meta semanal, não sequência obrigatória diária), reordenar exercícios, exercício personalizado, pausar/retomar timer, refresh token.
+**v1.1**: dashboard com gráficos, recordes pessoais, volume, frequência, sistema de consistência/streak (meta semanal, não sequência obrigatória diária), reordenar exercícios, exercício personalizado, pausar/retomar timer, refresh token, rate limiting robusto (store persistente, lockout por conta).
 
 **v2**: gerador de treino por IA (com revisão e confirmação do usuário antes de salvar), AI Coach para perguntas sobre evolução e treino.
 
