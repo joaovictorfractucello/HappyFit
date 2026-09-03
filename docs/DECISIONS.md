@@ -6,11 +6,29 @@ Registro das principais decisões do projeto e o raciocínio por trás de cada u
 
 O planejamento de um treino é uma entidade separada da execução real dele. Sem essa separação, ajustar a carga durante o treino destruiria o planejamento original, e não seria possível construir um histórico real de evolução. Ver `DATA_MODEL.md`.
 
+## Histórico imutável: a sessão é um snapshot
+
+Quando uma `WorkoutSession` começa, a configuração planejada de cada exercício (séries, repetições, carga) e o nome do treino são copiados para dentro da sessão (`SessionExercise`, `WorkoutSession.workout_name`). A partir daí a sessão é autossuficiente e não depende mais do treino.
+
+Consequências:
+
+- Editar um treino afeta só as sessões futuras.
+- Excluir um treino é um hard delete e não afeta nenhuma sessão passada — `workout_id` na sessão vira `null`, o resto do snapshot permanece.
+- Uma sessão finalizada não pode ser excluída — correções são feitas série a série (`PATCH /sessions/:id/sets/:setId`). Uma sessão ainda em andamento pode ser cancelada (é uma tentativa abandonada, não histórico).
+
+Alternativa descartada: soft delete no `Workout` (coluna `deleted_at` + filtro em toda query). Só faria sentido se a sessão dependesse do treino continuar existindo — como ela é snapshot, o soft delete seria complexidade e acúmulo de dados sem benefício.
+
+Por que não referenciar `Exercise` direto no `SetLog` e parar por aí: perderíamos a meta planejada daquele dia (o que o treino pedia), que é o que dá sentido à comparação de evolução ("planejei 40kg, fiz 37kg").
+
+## Identificadores: uuid v7
+
+PKs são `uuid` v7, não inteiro auto-incremento. Um `id` sequencial exposto numa API consumida por app convida à enumeração (`/workouts/37` → `/workouts/38`) e vaza contagem de registros. O `uuid` v7 (com prefixo de timestamp) mantém a vantagem de índice sequencial no banco que o inteiro teria, sem a fragmentação do `uuid` v4 aleatório.
+
 ## MVP reduzido, escolhido para ser finalizável
 
 O maior risco do projeto não é o backend (área de familiaridade), é o Flutter (zero experiência prévia). Por isso o MVP corta funcionalidades que adicionam superfície de UI/estado sem serem essenciais ao uso real: exercício personalizado, reordenar exercícios, pausar/retomar timer de descanso, refresh token.
 
-Por outro lado, CRUD completo em `Workout` e `Session` foi mantido — diferente das funcionalidades acima, editar/excluir treino e corrigir/excluir sessão são operações básicas sem as quais o app não seria realmente usável no dia a dia.
+Por outro lado, as operações básicas de CRUD foram mantidas onde a ausência tornaria o app inutilizável no dia a dia: editar e excluir `Workout`, corrigir séries de uma `WorkoutSession` e cancelar uma sessão em andamento. A exceção é excluir uma sessão já finalizada — ver "Histórico imutável" acima.
 
 ## App mobile nativo, sem versão web
 

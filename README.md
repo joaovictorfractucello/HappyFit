@@ -33,6 +33,24 @@ Anotações soltas, planilhas ou apps genéricos não encaixam bem no momento em
 - [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — cores, tipografia, espaçamento
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — decisões técnicas e o porquê de cada uma
 
+## Como rodar (backend)
+
+Pré-requisitos: Node.js 20+ e uma string de conexão PostgreSQL (o projeto usa Neon).
+
+```bash
+cd backend
+npm install                 # instala deps e gera o Prisma Client (postinstall)
+cp .env.example .env        # preencha DATABASE_URL, DIRECT_URL e JWT_SECRET
+npm run prisma:migrate      # aplica as migrations no banco
+npm run dev                 # sobe em http://localhost:3333
+```
+
+Verificação rápida: `GET http://localhost:3333/health` deve responder `{ "status": "ok" }`.
+
+Depois de editar `prisma/schema.prisma`, rode `npm run prisma:generate` para regenerar o client (`npm run prisma:migrate` já faz isso ao criar uma migration).
+
+O frontend Flutter ainda não foi iniciado — ver `docs/DECISIONS.md`.
+
 ## Escopo do MVP
 
 O MVP é intencionalmente enxuto — cobre o ciclo completo (criar treino → executar → ver histórico) sem funcionalidades que não afetam o uso essencial. Detalhes e roadmap completo em `docs/DECISIONS.md`.
