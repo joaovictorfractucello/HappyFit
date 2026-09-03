@@ -1,4 +1,3 @@
-import { create } from "domain";
 import { prisma } from "../config/prisma";
 
 export const userRepository = {
@@ -9,5 +8,4 @@ export const userRepository = {
   create(data: { name: string; email: string; passwordHash: string }) {
     return prisma.user.create({ data });
   },
-  
 };

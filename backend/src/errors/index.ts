@@ -1,12 +1,15 @@
 export class DomainError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = new.target.name;
-    }
+  code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = new.target.name;
+    this.code = code;
+  }
 }
 
 export class EmailAlreadyInUseError extends DomainError {
   constructor() {
-    super("Este email já está em uso.");
+    super("EMAIL_ALREADY_IN_USE", "Este email já está em uso.");
   }
 }

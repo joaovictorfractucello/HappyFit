@@ -5,5 +5,10 @@ export const registerLimiter = rateLimit({
   limit: 10,                 // 10 registros por IP na janela
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: { error: "Muitas tentativas de cadastro. Tente novamente mais tarde." },
+  message: {
+    error: {
+      code: "RATE_LIMITED",
+      message: "Muitas tentativas de cadastro. Tente novamente mais tarde.",
+    },
+  },
 });
