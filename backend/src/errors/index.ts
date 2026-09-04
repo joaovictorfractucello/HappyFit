@@ -13,3 +13,9 @@ export class EmailAlreadyInUseError extends DomainError {
     super("EMAIL_ALREADY_IN_USE", "Este email já está em uso.");
   }
 }
+
+export class InvalidCredentialsError extends DomainError {
+  constructor() {
+    super("INVALID_CREDENTIALS", "Credenciais inválidas.");
+  }
+}
