@@ -16,3 +16,11 @@ model User {
 
   @@map("users")
 }
+
+model Exercise {
+  id          String @id @default(uuid(7)) @db.Uuid
+  name        String @unique
+  muscleGroup String @map("muscle_group")
+
+  @@map("exercises")
+}
