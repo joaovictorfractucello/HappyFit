@@ -5,6 +5,7 @@ import { DomainError } from "../errors";
 const domainErrorStatus: Record<string, number> = {
   EMAIL_ALREADY_IN_USE: 409,
   INVALID_CREDENTIALS: 401,
+  UNAUTHORIZED: 401,
 };
 
 function getClientErrorStatus(err: unknown): number | null {

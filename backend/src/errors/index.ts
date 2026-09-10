@@ -19,3 +19,9 @@ export class InvalidCredentialsError extends DomainError {
     super("INVALID_CREDENTIALS", "Credenciais inválidas.");
   }
 }
+
+export class UnauthorizedError extends DomainError {
+  constructor() {
+    super("UNAUTHORIZED", "Autenticação necessária.");
+  }
+}
