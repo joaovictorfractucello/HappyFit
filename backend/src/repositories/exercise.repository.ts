@@ -6,4 +6,11 @@ export const exerciseRepository = {
       orderBy: { name: "asc" },
     });
   },
+
+  findManyByIds(ids: string[]) {
+  return prisma.exercise.findMany({
+    where: { id: { in: ids } },
+    select: { id: true },
+  });
+},
 };

@@ -6,6 +6,8 @@ const domainErrorStatus: Record<string, number> = {
   EMAIL_ALREADY_IN_USE: 409,
   INVALID_CREDENTIALS: 401,
   UNAUTHORIZED: 401,
+  WORKOUT_NOT_FOUND: 404,
+  INVALID_EXERCISE: 400,
 };
 
 function getClientErrorStatus(err: unknown): number | null {

@@ -25,3 +25,15 @@ export class UnauthorizedError extends DomainError {
     super("UNAUTHORIZED", "Autenticação necessária.");
   }
 }
+
+export class WorkoutNotFoundError extends DomainError {
+  constructor() {
+    super("WORKOUT_NOT_FOUND", "Treino não encontrado.");
+  }
+}
+
+export class InvalidExerciseError extends DomainError {
+  constructor() {
+    super("INVALID_EXERCISE", "Um ou mais exercícios informados não existem.");
+  }
+}
