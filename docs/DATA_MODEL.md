@@ -46,6 +46,8 @@ Excluir um treino é um **hard delete**: a linha e suas `WorkoutExercise` são r
 ### WorkoutExercise
 Tabela de ligação entre `Workout` e `Exercise`, guardando a configuração planejada (ordem, séries, repetições, carga) daquele exercício dentro daquele treino. Existe porque o mesmo exercício pode aparecer em treinos diferentes com configurações diferentes.
 
+`order` é definida pelo servidor a partir da posição do exercício no array recebido em `POST`/`PUT` — não é um campo que a API expõe como entrada. Reordenar exercícios sem reenviar o treino inteiro está fora do MVP (ver `DECISIONS.md`).
+
 Não é referenciada por `SetLog` — o histórico de execução aponta para o snapshot (`SessionExercise`), não para o plano.
 
 | Campo | Tipo |

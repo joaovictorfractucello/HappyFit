@@ -58,17 +58,23 @@ Toda resposta `4xx`/`5xx` segue esse envelope, incluindo as de rate limit e as d
 
 | Método | Rota | Login | Descrição |
 |---|---|---|---|
-| POST | `/workouts` | Sim | Cria treino com exercícios, ordem, séries, reps, carga |
+| POST | `/workouts` | Sim | Cria treino com exercícios, séries, reps, carga |
 | GET | `/workouts` | Sim | Lista treinos do usuário |
 | GET | `/workouts/:id` | Sim | Detalhe do treino |
-| PUT | `/workouts/:id` | Sim | Atualiza treino |
+| PUT | `/workouts/:id` | Sim | Substitui o treino inteiro (nome + exercícios) |
 | DELETE | `/workouts/:id` | Sim | Remove treino (hard delete; sessões passadas sobrevivem) |
 
-- `POST` — `201` treino criado · `400` · `401`
-- `GET` (lista) — `200` · `401`
-- `GET /:id` — `200` · `401` · `404` (inclui o caso "treino de outro usuário")
-- `PUT /:id` — `200` · `400` · `401` · `404`. Editar o treino **não** altera sessões já executadas (ver `DATA_MODEL.md`).
-- `DELETE /:id` — `204` · `401` · `404`
+**Corpo de `POST`/`PUT`** — `{ name, exercises: [{ exerciseId, sets, reps, load }] }`. Sem campo `order`: a ordem de cada exercício é a posição dele no array, não algo que o cliente informa à parte. `PUT` recebe o mesmo formato e **substitui** nome e exercícios por completo (não é update parcial) — os `WorkoutExercise` antigos são apagados e recriados a partir do que veio no corpo.
+
+**`POST /workouts`** — `201` `{ id, name, exercises: [{ id, order, sets, reps, load, exercise: { id, name, muscleGroup } }] }` · `400` `VALIDATION_ERROR` · `400` `INVALID_EXERCISE` (algum `exerciseId` não existe na biblioteca) · `401`
+
+**`GET /workouts`** — `200` `[ { id, name, exerciseCount } ]` (lista enxuta; sem os exercícios detalhados) · `401`
+
+**`GET /workouts/:id`** — `200` (mesmo formato de resposta do `POST`) · `400` `VALIDATION_ERROR` (`:id` não é um uuid) · `401` · `404` `WORKOUT_NOT_FOUND` (inclui o caso "treino de outro usuário" — nunca `403`, não confirma que o id existe)
+
+**`PUT /workouts/:id`** — `200` (mesmo formato de resposta do `POST`) · `400` validação (corpo ou `:id`) · `401` · `404` `WORKOUT_NOT_FOUND`. Editar o treino **não** altera sessões já executadas (ver `DATA_MODEL.md`).
+
+**`DELETE /workouts/:id`** — `204` sem corpo · `400` `VALIDATION_ERROR` (`:id` não é um uuid) · `401` · `404` `WORKOUT_NOT_FOUND`
 
 ## Sessions (execução do treino)
 
