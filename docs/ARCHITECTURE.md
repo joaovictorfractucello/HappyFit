@@ -98,6 +98,27 @@ Todo recurso pertencente a um usuário (`Workout`, `WorkoutSession` e o que pend
 - `WorkoutSession` carrega `user_id` direto (desnormalizado), então a checagem de posse de uma sessão não precisa de join com `Workout`.
 - Recurso de outro usuário responde `404` (não `403`) — não confirma que o `id` existe.
 
+### Recursos aninhados: verificar a cadeia de posse
+
+Quando o recurso não pendura direto no `user_id`, filtrar só o id "de cima" não basta. `SetLog` é o caso: ele se prende ao `SessionExercise`, não à sessão.
+
+```
+SetLog → SessionExercise → WorkoutSession → user_id
+```
+
+Em `POST /sessions/:id/sets`, dois ids vêm do cliente: a sessão (na URL) e o `sessionExerciseId` (no corpo). Validar só a sessão deixaria passar uma requisição que grava a série dentro da sessão de **outro** usuário — a posse chega a ser checada, mas no recurso errado.
+
+Regra: **todo id vindo do cliente que aponta para um recurso com dono é verificado até o dono.** Na prática, uma condição a mais na própria query:
+
+- `findFirst({ where: { id: sessionExerciseId, sessionId } })`
+- `findFirst({ where: { id: setId, sessionExercise: { sessionId } } })`
+
+Falha em qualquer elo → `404`.
+
+Um id difícil de adivinhar (uuid v7) reduz a chance de alguém tentar, mas não é controle de acesso — ids vazam em log, print, aparelho emprestado. Autorização se verifica, não se presume.
+
+**Contraexemplo — quando não se aplica:** o `exerciseId` no corpo de `POST /workouts` não precisa dessa verificação. `Exercise` é biblioteca fixa e pública, sem dono. Ali a pergunta é "existe?" (`INVALID_EXERCISE`, `400`), não "é seu?".
+
 ## SQL e segurança
 
 O acesso a dados usa Prisma, que gera queries parametrizadas por padrão — proteção contra SQL Injection é automática. Nenhuma query é construída por concatenação de string em nenhuma camada do sistema.
