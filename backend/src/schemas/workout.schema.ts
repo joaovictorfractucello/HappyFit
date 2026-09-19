@@ -16,3 +16,7 @@ export const createWorkoutSchema = z.object({
 });
 
 export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
+
+export const workoutIdParamsSchema = z.object({
+  id: z.uuid("id inválido."),
+});

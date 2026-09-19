@@ -1,26 +1,11 @@
 import { workoutRepository } from "../repositories/workout.repository";
 import { exerciseRepository } from "../repositories/exercise.repository";
-import { InvalidExerciseError } from "../errors";
+import { InvalidExerciseError, WorkoutNotFoundError } from "../errors";
 import type { CreateWorkoutInput } from "../schemas/workout.schema";
 
 export const workoutService = {
   async create(userId: string, input: CreateWorkoutInput) {
-    const exerciseIds = input.exercises.map((exercise) => exercise.exerciseId);
-    const uniqueIds = new Set(exerciseIds);
-
-    const found = await exerciseRepository.findManyByIds(exerciseIds);
-    if (found.length !== uniqueIds.size) {
-      throw new InvalidExerciseError();
-    }
-
-    const exercisesData = input.exercises.map((exercise, index) => ({
-      exerciseId: exercise.exerciseId,
-      order: index,
-      sets: exercise.sets,
-      reps: exercise.reps,
-      load: exercise.load,
-    }));
-
+    const exercisesData = await buildExercisesData(input.exercises);
     const workout = await workoutRepository.create(userId, input.name, exercisesData);
     return toWorkoutResponse(workout);
   },
@@ -34,7 +19,56 @@ export const workoutService = {
       exerciseCount: workout._count.exercises,
     }));
   },
+
+  async getById(userId: string, id: string) {
+    const workout = await workoutRepository.findByIdAndUser(id, userId);
+    if (!workout) {
+      throw new WorkoutNotFoundError();
+    }
+
+    return toWorkoutResponse(workout);
+  },
+
+  async update(userId: string, id: string, input: CreateWorkoutInput) {
+    const existing = await workoutRepository.findByIdAndUser(id, userId);
+    if (!existing) {
+      throw new WorkoutNotFoundError();
+    }
+
+    const exercisesData = await buildExercisesData(input.exercises);
+    const workout = await workoutRepository.update(id, input.name, exercisesData);
+    return toWorkoutResponse(workout);
+  },
+
+  async remove(userId: string, id: string) {
+    const existing = await workoutRepository.findByIdAndUser(id, userId);
+    if (!existing) {
+      throw new WorkoutNotFoundError();
+    }
+
+    await workoutRepository.delete(id);
+  },
 };
+
+// Usado por create e update: confere se os exerciseId existem e calcula
+// a order de cada um pela posição no array.
+async function buildExercisesData(exercises: CreateWorkoutInput["exercises"]) {
+  const exerciseIds = exercises.map((exercise) => exercise.exerciseId);
+  const uniqueIds = new Set(exerciseIds);
+
+  const found = await exerciseRepository.findManyByIds(exerciseIds);
+  if (found.length !== uniqueIds.size) {
+    throw new InvalidExerciseError();
+  }
+
+  return exercises.map((exercise, index) => ({
+    exerciseId: exercise.exerciseId,
+    order: index,
+    sets: exercise.sets,
+    reps: exercise.reps,
+    load: exercise.load,
+  }));
+}
 
 function toWorkoutResponse(workout: Awaited<ReturnType<typeof workoutRepository.create>>) {
   return {
