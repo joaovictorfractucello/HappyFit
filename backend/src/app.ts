@@ -4,6 +4,7 @@ import { userRoutes } from "./routes/users.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { exerciseRoutes } from "./routes/exercises.routes";
 import { workoutRoutes } from "./routes/workouts.routes";
+import { sessionRoutes } from "./routes/sessions.routes";
 
 export const app = express();
 
@@ -17,5 +18,6 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/exercises", exerciseRoutes);
 app.use("/api/v1/workouts", workoutRoutes);
+app.use("/api/v1/sessions", sessionRoutes);
 
 app.use(errorHandler);

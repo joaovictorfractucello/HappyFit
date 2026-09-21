@@ -37,3 +37,33 @@ export class InvalidExerciseError extends DomainError {
     super("INVALID_EXERCISE", "Um ou mais exercícios informados não existem.");
   }
 }
+
+export class SessionNotFoundError extends DomainError {
+  constructor() {
+    super("SESSION_NOT_FOUND", "Sessão não encontrada.");
+  }
+}
+
+export class SessionInProgressError extends DomainError {
+  constructor() {
+    super("SESSION_IN_PROGRESS", "Você já tem uma sessão em andamento.");
+  }
+}
+
+export class SessionAlreadyFinishedError extends DomainError {
+  constructor() {
+    super("SESSION_ALREADY_FINISHED", "Esta sessão já foi finalizada.");
+  }
+}
+
+export class SessionExerciseNotFoundError extends DomainError {
+  constructor() {
+    super("SESSION_EXERCISE_NOT_FOUND", "Exercício não encontrado nesta sessão.");
+  }
+}
+
+export class SetNotFoundError extends DomainError {
+  constructor() {
+    super("SET_NOT_FOUND", "Série não encontrada nesta sessão.");
+  }
+}

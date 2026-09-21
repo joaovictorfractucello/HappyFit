@@ -8,6 +8,11 @@ const domainErrorStatus: Record<string, number> = {
   UNAUTHORIZED: 401,
   WORKOUT_NOT_FOUND: 404,
   INVALID_EXERCISE: 400,
+  SESSION_NOT_FOUND: 404,
+  SESSION_IN_PROGRESS: 409,
+  SESSION_ALREADY_FINISHED: 409,
+  SESSION_EXERCISE_NOT_FOUND: 404,
+  SET_NOT_FOUND: 404,
 };
 
 function getClientErrorStatus(err: unknown): number | null {

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { workoutController } from "../controllers/workout.controller";
+import { sessionController } from "../controllers/session.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate, validateParams } from "../middlewares/validate";
 import { createWorkoutSchema, workoutIdParamsSchema } from "../schemas/workout.schema";
@@ -17,4 +18,10 @@ workoutRoutes.put(
   workoutController.update,
 );
 workoutRoutes.delete("/:id", authMiddleware, validateParams(workoutIdParamsSchema), workoutController.remove);
+workoutRoutes.post(
+  "/:id/sessions",
+  authMiddleware,
+  validateParams(workoutIdParamsSchema),
+  sessionController.start,
+);
 
