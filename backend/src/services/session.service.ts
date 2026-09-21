@@ -1,6 +1,14 @@
 import { sessionRepository } from "../repositories/session.repository";
 import { workoutRepository } from "../repositories/workout.repository";
-import { SessionNotFoundError, SessionInProgressError, WorkoutNotFoundError } from "../errors";
+import {
+  SessionNotFoundError,
+  SessionInProgressError,
+  SessionAlreadyFinishedError,
+  SessionExerciseNotFoundError,
+  SetNotFoundError,
+  WorkoutNotFoundError,
+} from "../errors";
+import type { AddSetInput, UpdateSetInput } from "../schemas/session.schema";
 
 export const sessionService = {
   async start(userId: string, workoutId: string) {
@@ -33,6 +41,50 @@ export const sessionService = {
     }
 
     return toSessionResponse(session);
+  },
+
+  async addSet(userId: string, sessionId: string, input: AddSetInput) {
+    const session = await sessionRepository.findByIdAndUser(sessionId, userId);
+    if (!session) {
+      throw new SessionNotFoundError();
+    }
+    if (session.endedAt) {
+      throw new SessionAlreadyFinishedError();
+    }
+
+    const sessionExercise = await sessionRepository.findSessionExercise(
+      input.sessionExerciseId,
+      sessionId,
+    );
+    if (!sessionExercise) {
+      throw new SessionExerciseNotFoundError();
+    }
+
+    const existingSets = await sessionRepository.countSets(input.sessionExerciseId);
+    const setNumber = existingSets + 1;
+
+    return sessionRepository.createSet(
+      input.sessionExerciseId,
+      setNumber,
+      input.loadDone,
+      input.repsDone,
+    );
+  },
+
+  async updateSet(userId: string, sessionId: string, setId: string, input: UpdateSetInput) {
+    const session = await sessionRepository.findByIdAndUser(sessionId, userId);
+    if (!session) {
+      throw new SessionNotFoundError();
+    }
+
+    // Sem checar endedAt de propósito: corrigir série de sessão finalizada
+    // é permitido — é o mecanismo de correção do histórico.
+    const set = await sessionRepository.findSetInSession(setId, sessionId);
+    if (!set) {
+      throw new SetNotFoundError();
+    }
+
+    return sessionRepository.updateSet(setId, input.loadDone, input.repsDone);
   },
 };
 
