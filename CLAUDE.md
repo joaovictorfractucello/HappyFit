@@ -2,7 +2,7 @@
 
 ## Contexto do desenvolvedor
 
-Experiente em backend: Node.js, Express, APIs REST, MySQL/PostgreSQL, Git. **Zero experiência prévia em Flutter e em TypeScript** — ambos estão sendo aprendidos durante a construção deste projeto, na prática, conforme cada funcionalidade exige.
+Experiente em backend: Node.js, Express, APIs REST, MySQL/PostgreSQL, Git. Começou este projeto com zero experiência prévia em Flutter e em TypeScript. TypeScript passou a usar no trabalho desde que este projeto começou, então já tem experiência prática real com a linguagem — mas segue gostando de explicações didáticas e aprofundadas, não só código pronto. **Flutter segue sendo zero experiência**, aprendido só aqui, na prática, conforme cada funcionalidade exige.
 
 Formação em Segurança da Informação e Engenharia de Software — segurança e arquitetura bem pensada são prioridades reais no projeto, não só teoria.
 
@@ -10,7 +10,7 @@ Formação em Segurança da Informação e Engenharia de Software — segurança
 
 - **JAMAIS edite, crie ou remova qualquer arquivo do projeto — incluindo este `CLAUDE.md` — sem eu autorizar explicitamente antes.** Proponha a mudança, mostre o que seria feito, e espere meu OK. Autorização vale só para o que foi pedido naquele momento, não é permissão permanente.
 - Sempre em português, com explicações didáticas — construa entendimento, não entregue só código pronto.
-- Antes de escrever código novo, explique o que vamos fazer e por quê. Não presuma conhecimento de conceitos ainda não vistos, especialmente em Flutter e TypeScript.
+- Antes de escrever código novo, explique o que vamos fazer e por quê. Não presuma conhecimento de conceitos ainda não vistos, especialmente em Flutter.
 - Ao corrigir um erro, siga sempre esta ordem: o que está errado → por que está errado → como corrigir → como evitar no futuro. Nunca entregue só a correção.
 - Se houver uma solução simples e uma mais complexa para o mesmo problema, apresente a simples primeiro, e explique quando a complexa valeria a pena.
 - Não adicione tecnologia, dependência ou abstração sem necessidade real. Questione se uma funcionalidade agrega valor antes de sugeri-la.

@@ -64,6 +64,6 @@ Em desenvolvimento. Projeto pessoal com duplo propósito: ferramenta de uso real
  
 Esse projeto foi desenvolvido com apoio de IA (Claude) como par de programação — planejamento, explicações e geração de código assistida, guiado pelo `CLAUDE.md` neste repositório.
  
-As decisões de produto e arquitetura são minhas: escopo do MVP, modelagem de dados, separação de camadas, stack, estratégia de autenticação e os trade-offs registrados em `docs/DECISIONS.md` foram discutidos, questionados e ajustados por mim durante o desenvolvimento — não aceitos de forma automática. Uso IA como ferramenta para acelerar execução e aprender tecnologias novas (Flutter, TypeScript) mais rápido, não como substituto de entendimento.
+As decisões de produto e arquitetura são minhas: escopo do MVP, modelagem de dados, separação de camadas, stack, estratégia de autenticação e os trade-offs registrados em `docs/DECISIONS.md` foram discutidos, questionados e ajustados por mim durante o desenvolvimento — não aceitos de forma automática. Uso IA como ferramenta para acelerar execução e aprender tecnologias novas (Flutter) mais rápido, não como substituto de entendimento.
  
 Considero isso parte do meu processo de trabalho, e não um atalho — por isso está documentado aqui, aberto, em vez de escondido.
