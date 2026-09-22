@@ -81,20 +81,43 @@ Toda resposta `4xx`/`5xx` segue esse envelope, incluindo as de rate limit e as d
 | Método | Rota | Login | Descrição |
 |---|---|---|---|
 | POST | `/workouts/:id/sessions` | Sim | Inicia uma sessão a partir de um treino |
+| GET | `/sessions` | Sim | Histórico de sessões do usuário |
+| GET | `/sessions/:id` | Sim | Detalhe da sessão, com exercícios e séries |
 | POST | `/sessions/:id/sets` | Sim | Registra uma série realizada |
 | PATCH | `/sessions/:id/sets/:setId` | Sim | Corrige peso/reps de uma série já registrada |
 | PATCH | `/sessions/:id` | Sim | Finaliza a sessão |
 | DELETE | `/sessions/:id` | Sim | Cancela uma sessão **em andamento** |
-| GET | `/sessions` | Sim | Histórico de sessões do usuário |
-| GET | `/sessions/:id` | Sim | Detalhe da sessão, com séries realizadas |
 
-- `POST /workouts/:id/sessions` — `201` sessão criada. O servidor grava `startedAt` e copia o snapshot (nome do treino + config planejada de cada exercício). · `401` · `404` · `409` `SESSION_IN_PROGRESS` se o usuário já tem uma sessão aberta
-- `POST /sessions/:id/sets` — `201` · `400` · `401` · `404` · `409` `SESSION_ALREADY_FINISHED`
-- `PATCH /sessions/:id/sets/:setId` — `200` · `400` · `401` · `404`. Permitido mesmo com a sessão já finalizada — é o mecanismo de correção do histórico.
-- `PATCH /sessions/:id` — `200` `{ ..., endedAt, durationMinutes }`. O servidor grava `endedAt` e calcula `durationMinutes` (`endedAt − startedAt`); o cliente não envia duração. · `401` · `404` · `409` `SESSION_ALREADY_FINISHED`
-- `DELETE /sessions/:id` — `204` se a sessão estiver em andamento · `401` · `404` · `409` `SESSION_ALREADY_FINISHED` (sessão finalizada é histórico, não se exclui)
-- `GET /sessions` — `200` lista, mais recentes primeiro · `401`
-- `GET /sessions/:id` — `200` · `401` · `404`
+**Formato do detalhe de uma sessão** (resposta de `POST /workouts/:id/sessions`, `GET /sessions/:id` e `PATCH /sessions/:id`):
+
+```json
+{
+  "id": "uuid", "workoutId": "uuid|null", "workoutName": "Treino A",
+  "startedAt": "...", "endedAt": "...|null", "durationMinutes": "int|null",
+  "exercises": [
+    { "id": "uuid", "order": 0,
+      "plannedSets": 4, "plannedReps": 10, "plannedLoad": 40,
+      "exercise": { "id": "uuid", "name": "Supino reto", "muscleGroup": "Peito" },
+      "sets": [ { "id": "uuid", "setNumber": 1, "loadDone": 40, "repsDone": 10 } ] }
+  ]
+}
+```
+
+`workoutId`/`workoutName`/`plannedSets`/`plannedReps`/`plannedLoad` são o **snapshot**: copiados do treino no instante em que a sessão começa, e congelados a partir daí — editar ou apagar o treino depois não muda nada aqui (ver `DATA_MODEL.md`). `workoutId` vira `null` se o treino de origem for apagado; `workoutName` continua preservado.
+
+**`POST /workouts/:id/sessions`** — sem corpo. `201` (formato acima, `exercises[].sets: []`) · `400` `VALIDATION_ERROR` (`:id` não é um uuid) · `401` · `404` `WORKOUT_NOT_FOUND` · `409` `SESSION_IN_PROGRESS` se o usuário já tem uma sessão aberta (checagem por usuário, não por treino)
+
+**`GET /sessions`** — `200` `[ { id, workoutId, workoutName, startedAt, endedAt, durationMinutes } ]`, mais recente primeiro; inclui a sessão em andamento (`endedAt: null`) se houver — é assim que o cliente descobre que existe uma pra retomar · `401`
+
+**`GET /sessions/:id`** — `200` (formato do detalhe) · `400` `VALIDATION_ERROR` · `401` · `404` `SESSION_NOT_FOUND` (inclui "sessão de outro usuário")
+
+**Corpo de `POST /sessions/:id/sets`** — `{ sessionExerciseId, loadDone, repsDone }`. Sem `setNumber`: o servidor calcula (`séries já registradas` + 1). `201` `{ id, sessionExerciseId, setNumber, loadDone, repsDone }` · `400` `VALIDATION_ERROR` · `401` · `404` `SESSION_NOT_FOUND` · `404` `SESSION_EXERCISE_NOT_FOUND` (o `sessionExerciseId` não pertence a esta sessão) · `409` `SESSION_ALREADY_FINISHED`
+
+**Corpo de `PATCH /sessions/:id/sets/:setId`** — `{ loadDone, repsDone }`, os dois obrigatórios. `200` (mesmo formato do set) · `400` `VALIDATION_ERROR` · `401` · `404` `SESSION_NOT_FOUND` · `404` `SET_NOT_FOUND` (o `setId` não pertence a esta sessão). Permitido mesmo com a sessão já finalizada — é o mecanismo de correção do histórico.
+
+**`PATCH /sessions/:id`** — sem corpo. `200` (formato do detalhe, com `endedAt` e `durationMinutes` preenchidos — `Math.round((endedAt − startedAt) / 60000)`; o cliente não envia duração) · `400` `VALIDATION_ERROR` · `401` · `404` `SESSION_NOT_FOUND` · `409` `SESSION_ALREADY_FINISHED`
+
+**`DELETE /sessions/:id`** — `204` sem corpo, se a sessão estiver em andamento (hard delete) · `400` `VALIDATION_ERROR` · `401` · `404` `SESSION_NOT_FOUND` · `409` `SESSION_ALREADY_FINISHED` (sessão finalizada é histórico, não se cancela)
 
 ## Fora do MVP (planejado para v1.1+)
 
