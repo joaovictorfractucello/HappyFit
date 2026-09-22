@@ -82,4 +82,23 @@ export const sessionRepository = {
       data: { loadDone, repsDone },
     });
   },
+
+  finish(id: string, endedAt: Date, durationMinutes: number) {
+    return prisma.workoutSession.update({
+      where: { id },
+      data: { endedAt, durationMinutes },
+      include: sessionWithExercises,
+    });
+  },
+
+  delete(id: string) {
+    return prisma.workoutSession.delete({ where: { id } });
+  },
+
+  findManyByUser(userId: string) {
+    return prisma.workoutSession.findMany({
+      where: { userId },
+      orderBy: { startedAt: "desc" },
+    });
+  },
 };

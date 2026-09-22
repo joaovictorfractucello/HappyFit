@@ -86,6 +86,49 @@ export const sessionService = {
 
     return sessionRepository.updateSet(setId, input.loadDone, input.repsDone);
   },
+
+  async finish(userId: string, id: string) {
+    const session = await sessionRepository.findByIdAndUser(id, userId);
+    if (!session) {
+      throw new SessionNotFoundError();
+    }
+    if (session.endedAt) {
+      throw new SessionAlreadyFinishedError();
+    }
+
+    const endedAt = new Date();
+    const durationMinutes = Math.round(
+      (endedAt.getTime() - session.startedAt.getTime()) / 60000,
+    );
+
+    const updated = await sessionRepository.finish(id, endedAt, durationMinutes);
+    return toSessionResponse(updated);
+  },
+
+  async cancel(userId: string, id: string) {
+    const session = await sessionRepository.findByIdAndUser(id, userId);
+    if (!session) {
+      throw new SessionNotFoundError();
+    }
+    if (session.endedAt) {
+      throw new SessionAlreadyFinishedError();
+    }
+
+    await sessionRepository.delete(id);
+  },
+
+  async list(userId: string) {
+    const sessions = await sessionRepository.findManyByUser(userId);
+
+    return sessions.map((session) => ({
+      id: session.id,
+      workoutId: session.workoutId,
+      workoutName: session.workoutName,
+      startedAt: session.startedAt,
+      endedAt: session.endedAt,
+      durationMinutes: session.durationMinutes,
+    }));
+  },
 };
 
 function toSessionResponse(session: Awaited<ReturnType<typeof sessionRepository.create>>) {

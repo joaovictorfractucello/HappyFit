@@ -11,7 +11,10 @@ import {
 
 export const sessionRoutes = Router();
 
+sessionRoutes.get("/", authMiddleware, sessionController.list);
 sessionRoutes.get("/:id", authMiddleware, validateParams(sessionIdParamsSchema), sessionController.getById);
+sessionRoutes.patch("/:id", authMiddleware, validateParams(sessionIdParamsSchema), sessionController.finish);
+sessionRoutes.delete("/:id", authMiddleware, validateParams(sessionIdParamsSchema), sessionController.cancel);
 
 sessionRoutes.post(
   "/:id/sets",

@@ -35,4 +35,25 @@ export const sessionController = {
     );
     res.status(200).json(set);
   },
+
+  async finish(req: Request<{ id: string }>, res: Response) {
+    if (!req.user) throw new UnauthorizedError();
+
+    const session = await sessionService.finish(req.user.id, req.params.id);
+    res.status(200).json(session);
+  },
+
+  async cancel(req: Request<{ id: string }>, res: Response) {
+    if (!req.user) throw new UnauthorizedError();
+
+    await sessionService.cancel(req.user.id, req.params.id);
+    res.status(204).send();
+  },
+
+  async list(req: Request, res: Response) {
+    if (!req.user) throw new UnauthorizedError();
+
+    const sessions = await sessionService.list(req.user.id);
+    res.status(200).json(sessions);
+  },
 };
