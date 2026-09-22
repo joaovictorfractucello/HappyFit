@@ -32,6 +32,7 @@ Anotações soltas, planilhas ou apps genéricos não encaixam bem no momento em
 - [`docs/API.md`](docs/API.md) — rotas da API
 - [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — cores, tipografia, espaçamento
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — decisões técnicas e o porquê de cada uma
+- [`postman/`](postman/) — collection Postman completa da API (todas as rotas + casos de borda), pronta pra importar e rodar
 
 ## Como rodar (backend)
 

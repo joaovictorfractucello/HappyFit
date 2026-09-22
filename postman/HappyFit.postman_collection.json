@@ -1,0 +1,1311 @@
+{
+  "info": {
+    "_postman_id": "7d2e6f2a-4b1c-4e9a-9f3a-b6e2c1a8f701",
+    "name": "HappyFit",
+    "description": "Collection completa da API do HappyFit — Auth, Users, Exercises, Workouts e Sessions. Cobre o caminho feliz de cada rota e os casos de borda que provam isolamento entre usuários, cadeia de posse em recursos aninhados, imutabilidade do snapshot de sessão e as regras de estado (sessão em andamento vs finalizada). Roda do início ao fim com \"Run Collection\" — cada request que produz um id relevante salva numa variável de collection, consumida pelos próximos passos. Detalhes de cada rota em docs/API.md; como rodar em postman/README.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET Health (sanity check)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"servidor no ar\", () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql(\"ok\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": { "type": "noauth" },
+        "url": {
+          "raw": "{{serverUrl}}/health",
+          "host": ["{{serverUrl}}"],
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth",
+      "description": "Cadastro e login. Cria dois usuários — o segundo existe só para os testes de isolamento nas pastas seguintes.",
+      "item": [
+        {
+          "name": "POST Register (Usuário 1)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"email1\")) {",
+                  "  pm.collectionVariables.set(\"email1\", \"usuario1.\" + Date.now() + \"@happyfit.test\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 conta criada\", () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.email).to.eql(pm.collectionVariables.get(\"email1\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuário Um\",\n  \"email\": \"{{email1}}\",\n  \"password\": \"senha12345\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login (Usuário 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 login\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set(\"token\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email1}}\",\n  \"password\": \"senha12345\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Register (Usuário 2)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"email2\")) {",
+                  "  pm.collectionVariables.set(\"email2\", \"usuario2.\" + Date.now() + \"@happyfit.test\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 conta criada\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuário Dois\",\n  \"email\": \"{{email2}}\",\n  \"password\": \"senha12345\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login (Usuário 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 login usuario 2\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"token2\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email2}}\",\n  \"password\": \"senha12345\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 dados do usuario logado\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.email).to.eql(pm.collectionVariables.get(\"email1\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Exercises",
+      "item": [
+        {
+          "name": "GET List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 lista de exercicios\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().length).to.be.at.least(2);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"exerciseId1\", body[0].id);",
+                  "pm.collectionVariables.set(\"exerciseId2\", body[1].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/exercises",
+              "host": ["{{baseUrl}}"],
+              "path": ["exercises"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Workouts",
+      "description": "CRUD completo, nessa ordem: cria, lista, detalha, edita, os três casos de borda (sem token / id mal formatado / dono errado), o INVALID_EXERCISE, e só então apaga — pra não invalidar os testes de borda que ainda precisam do treino existindo.",
+      "item": [
+        {
+          "name": "POST Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 treino criado\", () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.exercises[0].order).to.eql(0);",
+                  "  pm.expect(body.exercises[0].exercise.name).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set(\"workoutId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treino A - Peito\",\n  \"exercises\": [\n    { \"exerciseId\": \"{{exerciseId1}}\", \"sets\": 4, \"reps\": 10, \"load\": 40 },\n    { \"exerciseId\": \"{{exerciseId2}}\", \"sets\": 3, \"reps\": 12, \"load\": 25 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workouts",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 lista treinos\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()[0]).to.have.property(\"exerciseCount\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 detalhe do treino\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"workoutId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{workoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{workoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 treino substituido\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.exercises.length).to.eql(1);",
+                  "  pm.expect(body.exercises[0].load).to.eql(60);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treino A - Peito (atualizado)\",\n  \"exercises\": [\n    { \"exerciseId\": \"{{exerciseId2}}\", \"sets\": 5, \"reps\": 8, \"load\": 60 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{workoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{workoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Detail — sem token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 sem token\", () => {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"UNAUTHORIZED\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{workoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{workoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Detail — id mal formatado (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 id invalido\", () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_ERROR\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/abc-invalido",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "abc-invalido"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Detail — dono errado (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 nao e do usuario 2 - isolamento\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"WORKOUT_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token2}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{workoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{workoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create — exercício inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 exercicio nao existe\", () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"INVALID_EXERCISE\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treino invalido\",\n  \"exercises\": [\n    { \"exerciseId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\", \"sets\": 4, \"reps\": 10, \"load\": 40 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workouts",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Remove",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204 removido, sem corpo\", () => {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{workoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{workoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Detail — depois de removido (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 nao existe mais\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"WORKOUT_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{workoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{workoutId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "description": "O fluxo mais longo. Cria os próprios treinos (não depende dos de Workouts, já apagados) — um para o ciclo de vida completo da sessão, outro só pra testar o cancelamento em andamento no final.",
+      "item": [
+        {
+          "name": "POST Create Workout (para a sessão)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 treino criado\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"sessionWorkoutId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treino Sessão\",\n  \"exercises\": [\n    { \"exerciseId\": \"{{exerciseId1}}\", \"sets\": 4, \"reps\": 10, \"load\": 40 },\n    { \"exerciseId\": \"{{exerciseId2}}\", \"sets\": 3, \"reps\": 12, \"load\": 25 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workouts",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Start Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 sessao iniciada com snapshot\", () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.exercises[0].sets).to.eql([]);",
+                  "  pm.expect(body.exercises[0].plannedLoad).to.eql(40);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"sessionId\", body.id);",
+                  "pm.collectionVariables.set(\"sessionExerciseId\", body.exercises[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{sessionWorkoutId}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{sessionWorkoutId}}", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Session Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 detalhe da sessao\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"sessionId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Start Session — já em andamento (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 ja tem sessao aberta\", () => {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_IN_PROGRESS\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{sessionWorkoutId}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{sessionWorkoutId}}", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Workout (para provar o snapshot)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 treino editado\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treino Sessão\",\n  \"exercises\": [\n    { \"exerciseId\": \"{{exerciseId1}}\", \"sets\": 4, \"reps\": 10, \"load\": 999 },\n    { \"exerciseId\": \"{{exerciseId2}}\", \"sets\": 3, \"reps\": 12, \"load\": 25 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{sessionWorkoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{sessionWorkoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Session Detail — snapshot não mudou",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"plannedLoad continua 40, nao virou 999\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().exercises[0].plannedLoad).to.eql(40);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Add Set",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 primeira serie\", () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().setNumber).to.eql(1);",
+                  "});",
+                  "pm.collectionVariables.set(\"setId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionExerciseId\": \"{{sessionExerciseId}}\",\n  \"loadDone\": 42,\n  \"repsDone\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Add Set (2ª série)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 segunda serie, setNumber calculado pelo servidor\", () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().setNumber).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionExerciseId\": \"{{sessionExerciseId}}\",\n  \"loadDone\": 42,\n  \"repsDone\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Set",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 serie corrigida, setNumber intacto\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.loadDone).to.eql(45);",
+                  "  pm.expect(body.setNumber).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loadDone\": 45,\n  \"repsDone\": 8\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets/{{setId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets", "{{setId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Add Set — sessionExerciseId de outra sessão (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 cadeia de posse - nao pertence a esta sessao\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_EXERCISE_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionExerciseId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"loadDone\": 20,\n  \"repsDone\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Finish",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 finalizada com duracao calculada\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.endedAt).to.not.be.null;",
+                  "  pm.expect(body.durationMinutes).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Add Set — sessão finalizada (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 sessao ja finalizada\", () => {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_ALREADY_FINISHED\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionExerciseId\": \"{{sessionExerciseId}}\",\n  \"loadDone\": 20,\n  \"repsDone\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Set — mesmo com sessão finalizada (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 correcao permitida mesmo finalizada\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().loadDone).to.eql(50);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loadDone\": 50,\n  \"repsDone\": 9\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets/{{setId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets", "{{setId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Cancel — sessão finalizada (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 historico nao se cancela\", () => {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_ALREADY_FINISHED\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Remove Workout (para provar que a sessão sobrevive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204 treino de origem removido\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{sessionWorkoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{sessionWorkoutId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Session Detail — sobrevive ao treino apagado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 sessao intacta, workoutId agora null\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.workoutId).to.be.null;",
+                  "  pm.expect(body.workoutName).to.eql(\"Treino Sessão\");",
+                  "  pm.expect(body.exercises[0].sets.length).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Session Detail — dono errado (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 isolamento entre usuarios\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token2}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Sessions List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 historico, mais recente primeiro\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(Array.isArray(pm.response.json())).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Session Detail — id mal formatado (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 id invalido\", () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.details[0].field).to.eql(\"id\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "abc"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Finish — id mal formatado (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 id invalido\", () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_ERROR\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "abc"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Set — setId mal formatado (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 setId invalido\", () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.details[0].field).to.eql(\"setId\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loadDone\": 10,\n  \"repsDone\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/sets/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "sets", "abc"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Workout (para cancelar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 treino criado\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"sessionWorkoutId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treino Cancelamento\",\n  \"exercises\": [\n    { \"exerciseId\": \"{{exerciseId1}}\", \"sets\": 3, \"reps\": 10, \"load\": 20 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workouts",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Start Session (para cancelar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 sessao iniciada\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"sessionId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/workouts/{{sessionWorkoutId}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["workouts", "{{sessionWorkoutId}}", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Cancel — sessão em andamento (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204 cancelada, sem corpo\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "serverUrl", "value": "http://localhost:3333", "type": "string" },
+    { "key": "baseUrl", "value": "http://localhost:3333/api/v1", "type": "string" },
+    { "key": "email1", "value": "", "type": "string" },
+    { "key": "email2", "value": "", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "token2", "value": "", "type": "string" },
+    { "key": "exerciseId1", "value": "", "type": "string" },
+    { "key": "exerciseId2", "value": "", "type": "string" },
+    { "key": "workoutId", "value": "", "type": "string" },
+    { "key": "sessionWorkoutId", "value": "", "type": "string" },
+    { "key": "sessionId", "value": "", "type": "string" },
+    { "key": "sessionExerciseId", "value": "", "type": "string" },
+    { "key": "setId", "value": "", "type": "string" }
+  ]
+}
