@@ -68,4 +68,12 @@ Botões: **52–56px** de altura — maior que o padrão web, pensado para uso c
 
 ## Logo
 
-Em definição. Direção acordada: wordmark customizado (não fonte pronta), traços retos e angulares, cortes diagonais, alto peso visual — sem curvas suaves ou elementos "fofos". Ícone: pata de pinguim, geometria simplificada. A ser finalizado com apoio de ferramenta de design vetorial dedicada.
+**Wordmark**: fonte **Orbitron**, peso 900 (Black), caixa alta (`HAPPYFIT`), letter-spacing levemente aberto. Licença SIL Open Font License — livre para uso comercial sem restrição. Cor padrão: `#F4F6F8` (branco); variação de marca em `#8FCBEA` (accent) permitida em contextos de identidade (splash screen, materiais), não usada em UI funcional.
+
+**Ícone**: pegada de pinguim estilizada, silhueta orgânica com curvas suaves, sobre fundo escuro (`#121319`). Gerado via modelo de geração de imagem (Gemini) e aprovado em versão simples/limpa, sem elemento adicional de referência à academia — a identidade "fitness" já é carregada pelo nome do app e pelo wordmark, evitando poluir a silhueta. Contraste proposital com o wordmark angular (Orbitron): o ícone acompanha a linguagem arredondada do restante da UI (cards `16px`, botões `12px`), não a do texto.
+
+Cor padrão **branca** (`#F4F6F8`) — usada tanto no ícone do app quanto na splash screen. Variação em accent (`#8FCBEA`) existe como opção de marca (mesma regra do wordmark: reservada a contextos de identidade/materiais, não usada em UI funcional) — guardada, sem uso definido ainda.
+
+Arquivos em `docs/assets/`: `logo-icon-branca.png` (definitiva, 1024×1024) e `logo-icon.jpg` (variação accent, mesma resolução).
+
+PNG em alta resolução é suficiente — nenhuma vetorização necessária. `flutter_launcher_icons` gera os tamanhos do ícone do app e `flutter_native_splash` gera a splash screen, os dois a partir do PNG único, quando o projeto Flutter existir.
