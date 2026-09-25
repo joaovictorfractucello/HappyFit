@@ -80,6 +80,16 @@ O Modo Treino só **executa** o treino — nada de criar ou editar treino lá de
 
 **Por quê tela cheia?** Dois motivos. Evita tocar sem querer numa aba no meio do treino. E cria um modo mental claro — "agora estou treinando" — do mesmo jeito que apps de corrida e o modo treino do smartwatch fazem.
 
+### Voltar dentro do Modo Treino
+
+"Voltar" (a seta no topo, ou o botão voltar do Android) navega **dentro** do Modo Treino — nunca pra fora dele:
+
+| Você está em | Voltar faz |
+|---|---|
+| **Registro** | Volta pro Checklist, sem registrar nada. Serve pra quando você tocou no exercício errado ou a máquina ficou ocupada |
+| **Descanso** | Nada. O descanso termina sozinho, ou com Pular |
+| **Checklist** | Não sai do Modo Treino. Mostra a dica "Segure para encerrar" |
+
 ---
 
 ## 4. Checklist — a tela central
@@ -117,25 +127,31 @@ Aparece quando você toca num exercício.
 
 ```
 ┌──────────────────────────────────────┐
-│ Crucifixo                            │
-│ Série 3 de 3                         │
+│ ←  Crucifixo                         │
+│    Peito · Série 3 de 3              │
 │                                      │
 │     PESO              REPS           │
-│    [−] 22 kg [+]    [−] 12 [+]       │
-│                                      │
-│  ┌────────────────────────────────┐  │
-│  │        Concluir série          │  │
-│  └────────────────────────────────┘  │
+│     22 kg              12            │  ← toca no número pra digitar
 │                                      │
 │  Feitas hoje                         │
 │  1   20 kg × 12                      │  ← toca pra corrigir
 │  2   22 kg × 12                      │
+│                                      │
+│                                      │
+│  ┌────────────────────────────────┐  │
+│  │        Concluir série          │  │  ← colado no rodapé
+│  └────────────────────────────────┘  │
 └──────────────────────────────────────┘
 ```
 
-- **Peso e repetições** são números grandes, ajustados com `−` e `+`. Nada de teclado — digitar número com a mão suada, no meio do treino, é péssimo.
+- **Peso e repetições** são números grandes. Pra mudar, você **toca no número** e abre o teclado numérico.
 - **Repetições são um número só** (ex: 12), não uma faixa (ex: 8-10). É o que o backend guarda.
-- O botão **Concluir série** é grande e fica embaixo, no alcance do polegar.
+- O botão **Concluir série** é grande e fica **colado no rodapé da tela**. Com o celular numa mão só, o polegar alcança a parte de baixo, não o meio. As "Feitas hoje" ficam entre os números e o botão.
+- Embaixo do nome do exercício aparece o **grupo muscular** — é o dado que o backend tem pra isso.
+
+**Por quê digitar, e não botões `−` e `+`?** Com os valores iniciais preenchidos (abaixo), na maioria das séries você não mexe em nada. Quando mexe, digitar ganha: uma mudança grande (20 → 40 kg) é um toque só, e não precisa decidir de quanto em quanto o peso sobe — halter sobe de 2 em 2 kg, anilha de 2,5, máquina de 5. Um passo fixo nunca serviria pra todos. E a tela fica mais limpa.
+
+O peso aceita decimal (22,5 kg). No Brasil o teclado usa vírgula, então o app aceita tanto `22,5` quanto `22.5`.
 
 Ao tocar em Concluir série, a série é **salva no servidor na hora**, e a tela passa para o Descanso.
 
@@ -148,14 +164,20 @@ Ao tocar em Concluir série, a série é **salva no servidor na hora**, e a tela
 
 Na maioria das séries você só aperta Concluir, sem mexer em nada. E se aumentou o peso na série 2, a série 3 já começa com o peso novo.
 
-Não dá pra começar com o que você fez **no treino passado** — isso exigiria rota nova no backend (seção 10).
+**De onde vem a meta:** do **plano do treino**, não de sessões antigas. Quando você inicia, o backend copia a carga e as reps planejadas pra dentro da sessão (o snapshot).
+
+**Exemplo:** o plano diz "Crucifixo, 20 kg". A primeira série mostra 20 kg. Você faz com 22 e conclui — a segunda série já mostra 22. Mas no treino da semana que vem, a primeira série volta a mostrar **20 kg**, porque é o que está no plano.
+
+**Consequência:** pra "levar" a progressão pro próximo treino, você edita o plano (muda o Crucifixo pra 22 kg). É manual no MVP.
+
+Começar com o que você fez **no treino passado** seria mais cômodo, mas exige rota nova no backend (seção 10). É uma boa candidata pra primeira melhoria depois do MVP, se editar o plano toda semana incomodar no uso real.
 
 ### Séries feitas hoje e correção
 
 Embaixo do botão aparecem as séries que você já fez **hoje, neste exercício**. Servem pra duas coisas:
 
 - **Consultar** — "fiz 20 ou 22 na série anterior?" é a pergunta que mais aparece no meio do treino.
-- **Corrigir** — tocou numa série, ajusta com os mesmos `−`/`+` e salva.
+- **Corrigir** — tocou numa série, digita o valor certo e salva.
 
 **Dá pra corrigir, não dá pra apagar.** Se você tocar em Concluir sem querer, a série fica registrada: dá pra ajustar os números, não removê-la. O backend não tem rota pra apagar série. Como o botão é grande e intencional, o risco é baixo pro MVP — se incomodar no uso real, aí vale criar essa rota.
 
@@ -283,3 +305,7 @@ Estes itens foram considerados e **ficaram de fora de propósito**. Se um mockup
 | RPE, cadência, peso da barra separado | Dados que o app não registra |
 | Comparação com o treino anterior | Exigiria rota nova no backend |
 | Apagar uma série registrada | O backend não tem essa rota. Dá pra corrigir os números |
+| Imagens, equipamento ("Halteres 16 kg", "Barra W") e dicas de execução | O backend guarda só nome e grupo muscular do exercício |
+| Qualquer saída além do Encerrar (perfil, menu ⋮, seta pra fora) | Só existe uma saída. A seta do Registro volta pro Checklist, não sai do modo |
+| Botões `−` e `+` pra peso e reps | Toca no número e digita |
+| Textos de enchimento ("mantenha a intensidade", explicação do botão) | Ocupam espaço sem ajudar no treino |

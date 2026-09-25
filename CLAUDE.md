@@ -39,3 +39,13 @@ Leia `README.md` e os arquivos em `docs/` antes de iniciar qualquer trabalho:
 ## Filosofia geral
 
 Este projeto prioriza ser **terminável e bem executado** sobre ser grande. Prefira sempre a solução mais simples que resolve o problema corretamente. Segurança e arquitetura bem pensada desde o início são mais importantes que quantidade de funcionalidades.
+
+## Frontend (Flutter) — fluxo por tela
+
+1. **Spec antes do mockup.** Contexto de uso + decisões fechadas em `docs/screens/<TELA>.md`, com a lista do que ficou fora do escopo. A UI usa só o que o backend atual já devolve — funcionalidade nova só com minha confirmação explícita.
+2. **Mockup no Stitch**, pelo navegador, seguindo a spec. Claude escreve o prompt; eu avalio o resultado contra a spec.
+3. **Esqueleto — eu digito, Claude explica:** estrutura do widget, estado, navegação, chamada à API. É aqui que está o aprendizado de Flutter.
+4. **Visual — Claude aplica direto:** cores, espaçamento e tipografia do mockup aprovado, sem explicação linha a linha. A decisão criativa já foi tomada no mockup.
+5. Rodar no emulador duas vezes: depois do esqueleto (funciona, sem estilo) e depois do visual.
+
+Código exportado pelo Stitch é referência, nunca colado direto no projeto.
